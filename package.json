@@ -1,0 +1,36 @@
+{
+  "name": "solidity-common",
+  "version": "1.0.0",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "private-network": "ganache-cli --time 1970-01-01T00:00:00Z",
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "deploy": "truffle test --network kovan test/deploy.js",
+    "validate-js": "eslint *.js test/*.js test/helpers/*.js --fix",
+    "validate-sol": "solium --dir contracts --fix"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@openzeppelin/contracts": "^2.5.0",
+    "bignumber.js": "^9.0.0",
+    "dotenv": "^8.1.0",
+    "eslint-config-google": "^0.14.0",
+    "ganache-cli": "^6.7.0",
+    "truffle": "^5.1.20",
+    "truffle-assertions": "^0.9.2",
+    "truffle-flattener": "^1.4.2",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.2.6"
+  },
+  "devDependencies": {
+    "eslint": "^6.5.1",
+    "solidity-coverage": "^0.7.1",
+    "solium": "^1.2.5"
+  }
+}
