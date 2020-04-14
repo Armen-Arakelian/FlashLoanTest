@@ -13,6 +13,7 @@ contract FlashLoanTest is FlashLoanReceiverBase, Ownable {
 
     LendingPool lendingPool;
     LendingPoolAddressesProvider provider;
+    address constant EtherollAddress = 0xA52e014B3f5Cc48287c2D483A3E026C32cc76E6d;
 
     event Succsess();
 
