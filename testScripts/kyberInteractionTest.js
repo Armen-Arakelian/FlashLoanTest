@@ -1,6 +1,10 @@
 const IKyberNetworkProxy = artifacts.require('KyberNetworkProxyInterface');
 const BigNumber = require('bignumber.js');
 
+const toBN = (num) => {
+  return new BigNumber(num);
+};
+
 contract('KyberNetworkProxy', async () => {
   let kyberProxy;
   const KyberNetworkProxyInterfaceAddress = '0x818e6fecd516ecc3849daf6845e3ec868087b755';
@@ -14,11 +18,11 @@ contract('KyberNetworkProxy', async () => {
 
   it('get maxGas()', async () => {
     console.log((await kyberProxy.maxGasPrice.call()).toString());
-    const result = await kyberProxy.getExpectedRate.call(ETH_ADDRESS, porstenTokenAddress, 10000);
+    const result = await kyberProxy.getExpectedRate.call(ETH_ADDRESS, ropstenDaiAddress, toBN(100000000000000000000));
     console.log(result.expectedRate.toString());
     console.log(result.slippageRate.toString());
 
-    const logs = await kyberProxy.swapEtherToToken(porstenTokenAddress, result.expectedRate, {value: new BigNumber(100000000000000000)});
+    const logs = await kyberProxy.swapEtherToToken(ropstenDaiAddress, result.expectedRate, {value: new BigNumber(100000)});
 
     console.log(logs);
   })
