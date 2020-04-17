@@ -11,7 +11,8 @@
     "compile": "truffle compile",
     "flashLoanTest": "truffle --network kovan testScripts/flashLoanTest.js",
     "kyberTest": "truffle test ./testScripts/kyberInteractionTest.js --network ropsten",
-    "arbitrageTest": "node ./arbitrageBot.js",
+    "uniTest": "truffle test ./testScripts/uniswapTest.js --network ropsten",
+    "arbitrageTest": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
     "validate-js": "eslint *.js test/*.js test/helpers/*.js --fix",
     "validate-sol": "solium --dir contracts --fix"
   },

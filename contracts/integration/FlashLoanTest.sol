@@ -3,9 +3,9 @@ pragma solidity ^0.5.0;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 
-import "../flashloan/base/FlashLoanReceiverBase.sol";
-import "../configuration/LendingPoolAddressesProvider.sol";
-import "../lendingpool/LendingPool.sol";
+import "../aaveContracts/flashloan/base/FlashLoanReceiverBase.sol";
+import "../aaveContracts/configuration/LendingPoolAddressesProvider.sol";
+import "../aaveContracts/lendingpool/LendingPool.sol";
 
 contract FlashLoanTest is FlashLoanReceiverBase, Ownable {
 
