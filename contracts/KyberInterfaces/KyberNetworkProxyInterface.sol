@@ -1,7 +1,7 @@
 pragma solidity ^0.5.5;
 
 
-import "./ERC20Interface.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
 /// @title Kyber Network interface
