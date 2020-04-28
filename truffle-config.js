@@ -99,9 +99,14 @@ module.exports = {
     },
 
     main: {
-      provider: () => new HDWalletProvider(process.env.MNENOMIC, 'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY),
-      gasPrice: 10000000000,
+      provider: () => {
+        return new HDWalletProvider(
+        [process.env.PRIVATEKEY1],
+        'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
+      },
       network_id: 1,
+
+      gasPrice: 1000000000,
     },
 
     // Useful for private networks

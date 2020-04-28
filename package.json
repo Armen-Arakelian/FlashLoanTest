@@ -13,6 +13,7 @@
     "kyberTest": "truffle test ./testScripts/kyberInteractionTest.js --network ropsten",
     "uniTest": "truffle test ./testScripts/uniswapTest.js --network ropsten",
     "arbitrageTest": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
+    "arbitrageTestMAINNET": "truffle test ./testScripts/arbitrageTestMAINNET.js --network main",
     "validate-js": "eslint *.js test/*.js test/helpers/*.js --fix",
     "validate-sol": "solium --dir contracts --fix"
   },
