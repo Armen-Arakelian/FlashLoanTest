@@ -30,4 +30,4 @@ const getJointTokensUniKyber = async () => {
   console.log(result);
 }
 
-getJointTokens();
+getJointTokensUniKyber();
