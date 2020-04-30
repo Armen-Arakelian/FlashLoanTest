@@ -17,6 +17,7 @@ const toBN = (num) => {
 };
 
 const DECIMALS_18 = toBN(1000000000000000000); 
+const UNLIMITED_DEADLINE = 9000000000;
 const TRANSACTION_GAS = toBN(500000);
 
 const tokenAddresses = {
@@ -110,17 +111,25 @@ const getPriceEthToTokenKyber = async (tokenSig, numberOfEth) => {
   const kyberProxy = await IKyberNetworkProxy.at(KyberNetworkProxyAddress);
 
   const rate = await kyberProxy.getExpectedRate.call(tokenAddresses.ETH, tokenAddresses[tokenSig], numberOfEth);
-  return (toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfEth);
+
+  return {
+    pureRate: toBN(rate.expectedRate),
+    wrappedRate: toBN((toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfEth)),
+  };
 }
 
 const getPriceTokenToEthKyber = async (tokenSig, numberOfTokens) => {
   const kyberProxy = await IKyberNetworkProxy.at(KyberNetworkProxyAddress);
 
   const rate = await kyberProxy.getExpectedRate.call(tokenAddresses[tokenSig], tokenAddresses.ETH, numberOfTokens);
-  return (toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfTokens);
+
+  return {
+    pureRate: toBN(rate.expectedRate),
+    wrappedRate: toBN((toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfTokens)),
+  };
 }
 
-const checkArbitragePossibilityForToken = async (arbitrageContract, tokenSig, gasPrice) => {
+const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
   topEthBorder = toBN(100000000000000000000000);
   botEthBorder = toBN(10000000000000000);
   const ethForGasFee = TRANSACTION_GAS.times(gasPrice);
@@ -128,33 +137,74 @@ const checkArbitragePossibilityForToken = async (arbitrageContract, tokenSig, ga
   let i = 1;
   while(topEthBorder.div(i) > botEthBorder) {
     const ethAmount = topEthBorder.div(i);
-    const priceDifferenceOneWay = await getPriceTokenToEthKyber(tokenSig, (await getPriceEthToTokenUni(tokenSig, ethAmount)));
-    const priceDifferenceTheOtherWay = await getPriceTokenToEthUni(tokenSig, (await getPriceEthToTokenKyber(tokenSig, ethAmount)));
+
+    const uniRateEthToToken = await getPriceEthToTokenUni(tokenSig, ethAmount);
+    const kyberRateEthToToken = await getPriceEthToTokenKyber(tokenSig, ethAmount);
+
+    console.log(kyberRateEthToToken.wrappedRate);
+
+    const uniRateTokenToEth = await getPriceTokenToEthUni(tokenSig, kyberRateEthToToken.wrappedRate);
+    const kyberRateTokenToEth = (await getPriceTokenToEthKyber(tokenSig, uniRateEthToToken));
+
+    const priceDifferenceOneWay = kyberRateTokenToEth.wrappedRate;
+    const priceDifferenceTheOtherWay = uniRateTokenToEth;
+
     const potentialProfitOneWay = (toBN(priceDifferenceOneWay).minus(ethAmount)).minus(ethForGasFee);
     const potentialProfitTheOtherWay = (toBN(priceDifferenceTheOtherWay).minus(ethAmount)).minus(ethForGasFee);
 
     if (potentialProfitOneWay > 0) {
-      // perform a trade
+      console.log('Trading Uni to Kyber, token' + tokenSig, ' start amount ' + ethAmount);
+      console.log('Potentian profit is ' + potentialProfitOneWay);
+
+      try {
+        await performUniKyberTrade(tokenSig, ethAmount, uniRateEthToToken, kyberRateTokenToEth.pureRate);
+      }
+      catch(error) {
+        console.log('Trade failed ');
+        console.error(error);
+      }
     } else if (potentialProfitTheOtherWay > 0) {
-      // preform a trade
+      console.log('Trading Kyber to Uni, token' + tokenSig, ' start amount ' + ethAmount);
+      console.log('Potentian profit is ' + potentialProfitTheOtherWay);
+
+      try {
+        await performKyberUniTrade(tokenSig, ethAmount, kyberRateEthToToken.wrappedRate, 
+          uniRateTokenToEth, kyberRateEthToToken.pureRate);
+      }
+      catch(error) {
+        console.log('Trade failed');
+        console.error(error);
+      }
     }
 
     i *= 10;
   }
 }
 
-const performUniKyberTrade = async (arbitrageContract) => {
+const performUniKyberTrade = async (tokenSig, ethAmountToSell, tokensAmountToTrade, kyberRate) => {
+  const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
 
+  const logs = await arbitrageContract.flashUniETHToKyberTokens(uniConfig.exchanges[tokenSig], 
+    ethAmountToSell, tokensAmountToTrade, UNLIMITED_DEADLINE, tokenAddresses[tokenSig], tokensAmountToTrade, kyberRate);
+
+  console.log(logs);
 }
 
-const performkyberuniTrade = async (arbitrageContract) => {
+const performKyberUniTrade = async (tokenSig, ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, kyberRate) => {
+  const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
 
+  const logs = arbitrageContract.flashKyberETHToUniTokens(uniConfig.exchanges[tokenSig], 
+    ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, UNLIMITED_DEADLINE, tokenAddresses[tokenSig], kyberRate);
+
+  console.log(logs);
 }
 
 
 const checkForAllPossibilities = async () => {
-  const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
-  // loop for all tokens 
+  
+  array.forEach(element => {
+    
+  });
   checkArbitragePossibilityForToken(arbitrageContract, 'DAI', )
   //
 }
@@ -167,15 +217,26 @@ const getGasPrice = async () => {
 
   const resultGas = await rp(options);
 
-  return resultGas.safeLow;
+  return toBN(resultGas.average).times(100000000);
 }
 
 const getExchange = async (tokenSig) => {
   return await (await UniswapFactory.at(UniswapFactoryAddress)).getExchange.call(tokenAddresses[tokenSig]);
 }
 
+const runBot = async () => {
+  await checkArbitragePossibilityForToken('DAI', await getGasPrice());
+}
+
 module.exports = async (callback) => {
-  console.log(await getGasPrice());
+  //console.log(await getPriceTokenToEthUni('DAI', 10));
+  try {
+    await runBot();
+  }
+  catch(error) {
+    callback(error);
+  }
+  
   callback();
 }
 
