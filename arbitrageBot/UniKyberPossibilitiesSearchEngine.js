@@ -16,29 +16,23 @@ const toBN = (num) => {
   return new BigNumber(num);
 };
 
+const toRoundedBN = (num) => {
+  return new RoundedBN(num);
+};
+
 const DECIMALS_18 = toBN(1000000000000000000); 
 const UNLIMITED_DEADLINE = 9000000000;
 const TRANSACTION_GAS = toBN(500000);
 
+const validTokensRopsten = ['DAI', 'BAT'];
+
 const tokenAddresses = {
   ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  KNC: '',
-  SNT: '',
-  MANA: '',
-  BAT: '',
-  RDN: '',
-  SALT: '',
-  RCN: '',
+  KNC: '0x4E470dc7321E84CA96FcAEDD0C8aBCebbAEB68C6',
+  MANA: '0x72fd6C7C1397040A66F33C2ecC83A0F71Ee46D5c',
+  BAT: '0xDb0040451F373949A4Be60dcd7b6B8D6E42658B6',
+  RDN: '0x5422Ef695ED0B1213e2B953CFA877029637D9D26',
   DAI: '0xaD6D458402F60fD3Bd25163575031ACDce07538D',
-  LINK: '',
-  WETH: '',
-  SNX: '',
-  TKN: '',
-  MET: '',
-  BAND: '',
-  RSR: '',
-  TRYB: '',
-  PNK: '',
 }
 
 const uniConfig = {
@@ -46,15 +40,11 @@ const uniConfig = {
 
   // token address to exchange address
   exchanges: {
-    '0xaD6D458402F60fD3Bd25163575031ACDce07538D': '0xc0fc958f7108be4060F33a699a92d3ea49b0B5f0',
-    '': '',
-    '': '',
-    '': '',
-    '': '',
-    '': '',
-    '': '',
-    '': '',
-    '': '',
+    DAI: '0xc0fc958f7108be4060F33a699a92d3ea49b0B5f0',
+    KNC: '0x83f986f6c772d20dd9D00A71082236f0F2F9Ec61',
+    MANA: '0xE0131804742D16f8ACBd1924044D6E63621e2A35',
+    BAT: '0x8Bcd6f821012989b8d32EF002667a6524296A279',
+    RDN: '0x0B517580E7D1761E06EE39a366D3D2bf3b308864',
   },
 };
 
@@ -94,17 +84,17 @@ const getJointTokensUniKyber = async () => {
 }
 
 const getPriceEthToTokenUni = async (tokenSig, numberOfEth) => {
-  const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenAddresses[tokenSig]]);
+  const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenSig]);
   const price = await uniExchange.getEthToTokenInputPrice.call(numberOfEth);
 
-  return price;
+  return toBN(price);
 }
 
 const getPriceTokenToEthUni = async (tokenSig, numberOftokens) => {
-  const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenAddresses[tokenSig]]);
+  const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenSig]);
   const price = await uniExchange.getTokenToEthInputPrice.call(numberOftokens);
 
-  return price;
+  return toBN(price);
 }
 
 const getPriceEthToTokenKyber = async (tokenSig, numberOfEth) => {
@@ -138,19 +128,44 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
   while(topEthBorder.div(i) > botEthBorder) {
     const ethAmount = topEthBorder.div(i);
 
-    const uniRateEthToToken = await getPriceEthToTokenUni(tokenSig, ethAmount);
-    const kyberRateEthToToken = await getPriceEthToTokenKyber(tokenSig, ethAmount);
+    let uniRateEthToToken;
+    let kyberRateEthToToken;
+    try {
+      uniRateEthToToken = await getPriceEthToTokenUni(tokenSig, ethAmount);
+      kyberRateEthToToken = await getPriceEthToTokenKyber(tokenSig, ethAmount);
+    }
+    catch(err) {
+      console.log(err);
+      i *= 10;
+      continue;
+    }
 
-    console.log(kyberRateEthToToken.wrappedRate);
-
-    const uniRateTokenToEth = await getPriceTokenToEthUni(tokenSig, kyberRateEthToToken.wrappedRate);
-    const kyberRateTokenToEth = (await getPriceTokenToEthKyber(tokenSig, uniRateEthToToken));
+    let uniRateTokenToEth;
+    let kyberRateTokenToEth;
+    try {
+      uniRateTokenToEth = await getPriceTokenToEthUni(tokenSig, kyberRateEthToToken.wrappedRate);
+      kyberRateTokenToEth = await getPriceTokenToEthKyber(tokenSig, uniRateEthToToken);
+    }
+    catch(err) {
+      console.log(err);
+      i *= 10;
+      continue;
+    }
 
     const priceDifferenceOneWay = kyberRateTokenToEth.wrappedRate;
     const priceDifferenceTheOtherWay = uniRateTokenToEth;
 
-    const potentialProfitOneWay = (toBN(priceDifferenceOneWay).minus(ethAmount)).minus(ethForGasFee);
-    const potentialProfitTheOtherWay = (toBN(priceDifferenceTheOtherWay).minus(ethAmount)).minus(ethForGasFee);
+    const potentialProfitOneWay = ((toBN(priceDifferenceOneWay).minus(ethAmount)).minus(ethForGasFee)).decimalPlaces(0);
+    const potentialProfitTheOtherWay = ((toBN(priceDifferenceTheOtherWay).minus(ethAmount)).minus(ethForGasFee)).decimalPlaces(0);
+
+    console.log({
+      token: tokenSig,
+      ethAmount: ethAmount.toFixed(),
+      priceDifference1: priceDifferenceOneWay.toFixed(),
+      priceDifference2: priceDifferenceTheOtherWay.toFixed(),
+      profit1: potentialProfitOneWay.toFixed(),
+      profit2: potentialProfitTheOtherWay.toFixed(),
+    });
 
     if (potentialProfitOneWay > 0) {
       console.log('Trading Uni to Kyber, token' + tokenSig, ' start amount ' + ethAmount);
@@ -193,7 +208,7 @@ const performUniKyberTrade = async (tokenSig, ethAmountToSell, tokensAmountToTra
 const performKyberUniTrade = async (tokenSig, ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, kyberRate) => {
   const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
 
-  const logs = arbitrageContract.flashKyberETHToUniTokens(uniConfig.exchanges[tokenSig], 
+  const logs = await arbitrageContract.flashKyberETHToUniTokens(uniConfig.exchanges[tokenSig], 
     ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, UNLIMITED_DEADLINE, tokenAddresses[tokenSig], kyberRate);
 
   console.log(logs);
@@ -201,12 +216,11 @@ const performKyberUniTrade = async (tokenSig, ethAmountToSell, tokensAmountToTra
 
 
 const checkForAllPossibilities = async () => {
+  let gasPrice = await getGasPrice();
   
-  array.forEach(element => {
-    
-  });
-  checkArbitragePossibilityForToken(arbitrageContract, 'DAI', )
-  //
+  for(let i = 0; i < validTokensRopsten.length; i++) {
+    await checkArbitragePossibilityForToken(validTokensRopsten[i], gasPrice);
+  }
 }
 
 const getGasPrice = async () => {
@@ -225,11 +239,10 @@ const getExchange = async (tokenSig) => {
 }
 
 const runBot = async () => {
-  await checkArbitragePossibilityForToken('DAI', await getGasPrice());
+  await checkForAllPossibilities();
 }
 
 module.exports = async (callback) => {
-  //console.log(await getPriceTokenToEthUni('DAI', 10));
   try {
     await runBot();
   }
@@ -239,5 +252,10 @@ module.exports = async (callback) => {
   
   callback();
 }
+
+const withdrawETH = async () => {
+  const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
+  await arbitrageContract.withdrawETH();
+};
 
 

@@ -14,6 +14,7 @@
     "uniTest": "truffle test ./testScripts/uniswapTest.js --network ropsten",
     "arbitrageTest": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
     "arbitrageTestMAINNET": "truffle test ./testScripts/arbitrageTestMAINNET.js --network main",
+    "arbitrageBot": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngine.js --network ropsten",
     "validate-js": "eslint *.js test/*.js test/helpers/*.js --fix",
     "validate-sol": "solium --dir contracts --fix"
   },
@@ -28,11 +29,11 @@
     "ganache-cli": "^6.7.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.5",
-    "truffle": "^5.1.22",
+    "truffle": "^5.1.23",
     "truffle-assertions": "^0.9.2",
     "truffle-flattener": "^1.4.2",
     "truffle-hdwallet-provider": "^1.0.17",
-    "web3": "^1.2.6"
+    "web3": "^1.0.0-beta.35"
   },
   "devDependencies": {
     "eslint": "^6.5.1",
