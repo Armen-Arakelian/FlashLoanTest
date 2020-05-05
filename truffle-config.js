@@ -75,8 +75,8 @@ module.exports = {
     ropsten: {
       provider: () => {
         return new HDWalletProvider(
-        [process.env.PRIVATEKEY1],
-        'https://ropsten.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
+          [process.env.PRIVATEKEY1],
+          'https://ropsten.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
       },
       network_id: 3,
       // gas: 8000000,
@@ -88,8 +88,8 @@ module.exports = {
     kovan: {
       provider: () => {
         return new HDWalletProvider(
-        [process.env.PRIVATEKEY1],
-        'https://kovan.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
+          [process.env.PRIVATEKEY1],
+          'https://kovan.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
       },
       network_id: 42,
       // gas: 8000000,
@@ -101,12 +101,12 @@ module.exports = {
     main: {
       provider: () => {
         return new HDWalletProvider(
-        [process.env.PRIVATEKEY1],
-        'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
+          [process.env.PRIVATEKEY1],
+          'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
       },
       network_id: 1,
 
-      gasPrice: 1000000000,
+      gasPrice: 10000000000,
     },
 
     // Useful for private networks

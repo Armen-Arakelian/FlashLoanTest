@@ -10,7 +10,6 @@ contract('FlashLoanTest', async (accounts) => {
 
   describe('Deploy and configure FlashLoanTest contract', async () => {
     it('', async () => {
-
       await flashLoanTest.send(10000000000000000);
       const result = await flashLoanTest.flashLoan();
       console.log(result.logs[0].event);

@@ -19,7 +19,7 @@ contract('uniswap', async () => {
     uniswapFactory = await UniswapFactory.at(UniswapFactoryAddress);
     uniswapExchangeDai = await UniswapExchange.at(await uniswapFactory.getExchange(ropstenDaiAddress));
     ropstenDaiToken = await IERC20.at(ropstenDaiAddress);
-  })
+  });
 
   it('Uniswap test', async () => {
     const result = await uniswapExchangeDai.getTokenToEthOutputPrice(toBN(1140000000000000000));
@@ -33,7 +33,7 @@ contract('uniswap', async () => {
 
     // await ropstenDaiToken.approve(uniswapExchangeDai.address, toBN(10000000000000000000));
     // const logs = await uniswapExchangeDai.addLiquidity(toBN(20000000000000000), toBN(8000000000000000000), 1587131023);
-    
+
     // console.log(logs);
-  })
-})
+  });
+});

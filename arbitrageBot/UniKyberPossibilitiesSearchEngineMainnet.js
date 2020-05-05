@@ -7,95 +7,91 @@ const UniswapFactory = artifacts.require('UniswapFactoryInterface');
 
 const ArbitrageContract = artifacts.require('ArbitrageFlashUniKyber');
 
-const UniswapFactoryAddress = '0x9c83dCE8CA20E9aAF9D3efc003b2ea62aBC08351';
+const UniswapFactoryAddress = '0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95';
 const KyberNetworkProxyAddress = '0x818E6FECD516Ecc3849DAf6845e3EC868087B755';
 
-const arbitrageContractAddress = '0x6f0fb79ed4e6b07ae33883fbfcb2990ceca2df75';
+const arbitrageContractAddress = '0x1e857482679a1B71ca15227DA1b14a58B5602DBF';
 
 const toBN = (num) => {
   return new BigNumber(num);
 };
 
-const toRoundedBN = (num) => {
-  return new RoundedBN(num);
-};
-
-const DECIMALS_18 = toBN(1000000000000000000); 
+const DECIMALS_18 = toBN(1000000000000000000);
 const UNLIMITED_DEADLINE = 9000000000;
 const TRANSACTION_GAS = toBN(500000);
 
-const validTokensRopsten = ['DAI', 'BAT'];
+const validTokensRopsten = ['KNC', 'MANA', 'BAT', 'RDN', 'DAI'];
 
-const tokenAddresses = {
+const tokenAddresses= {
   ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  KNC: '0x4E470dc7321E84CA96FcAEDD0C8aBCebbAEB68C6',
-  MANA: '0x72fd6C7C1397040A66F33C2ecC83A0F71Ee46D5c',
-  BAT: '0xDb0040451F373949A4Be60dcd7b6B8D6E42658B6',
-  RDN: '0x5422Ef695ED0B1213e2B953CFA877029637D9D26',
-  DAI: '0xaD6D458402F60fD3Bd25163575031ACDce07538D',
-}
+  KNC: '0xdd974d5c2e2928dea5f71b9825b8b646686bd200',
+  MANA: '0x0f5d2fb29fb7d3cfee444a200298f468908cc942',
+  BAT: '0x0D8775F648430679A709E98d2b0Cb6250d2887EF',
+  RDN: '0x255aa6df07540cb5d3d297f0d0d4d84cb52bc8e6',
+  DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
+};
 
 const uniConfig = {
   baseUrl: 'https://api.uniswap.info/v1/',
 
-  // token address to exchange address
+  // token signature to exchange address
   exchanges: {
-    DAI: '0xc0fc958f7108be4060F33a699a92d3ea49b0B5f0',
-    KNC: '0x83f986f6c772d20dd9D00A71082236f0F2F9Ec61',
-    MANA: '0xE0131804742D16f8ACBd1924044D6E63621e2A35',
-    BAT: '0x8Bcd6f821012989b8d32EF002667a6524296A279',
-    RDN: '0x0B517580E7D1761E06EE39a366D3D2bf3b308864',
+    DAI: '0x2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667',
+    KNC: '0x49c4f9bc14884f6210F28342ceD592A633801a8b',
+    MANA: '0xC6581Ce3A005e2801c1e0903281BBd318eC5B5C2',
+    BAT: '0x2E642b8D59B45a1D8c5aEf716A84FF44ea665914',
+    RDN: '0x7D03CeCb36820b4666F45E1b4cA2538724Db271C',
   },
 };
 
 const kyberConfig = {
   baseUrl: 'https://ropsten-api.kyber.network/',
-}
+};
 
 const getJointTokensUniKyber = async () => {
   const optionsKyber = {
     url: kyberConfig.baseUrl + 'currencies',
-    json: true
+    json: true,
   };
 
   const optionsUniswap = {
     url: uniConfig.baseUrl + 'assets',
-    json: true
+    json: true,
   };
 
   const resultKyber = (await rp(optionsKyber)).data;
   const resultUni = Object.values(await rp(optionsUniswap));
-  let kyberSyms = [];
-  let uniSyms = [];
+  const kyberSyms = [];
+  const uniSyms = [];
 
-  resultKyber.forEach(element => {
+  resultKyber.forEach((element) => {
     kyberSyms.push(element.symbol);
   });
 
-  resultUni.forEach(element => {
+  resultUni.forEach((element) => {
     uniSyms.push(element.symbol);
   });
 
-  let result = kyberSyms.filter(function(val) {
+  const result = kyberSyms.filter(function(val) {
     return uniSyms.indexOf(val) != -1;
   });
-  
+
   console.log(result);
-}
+};
 
 const getPriceEthToTokenUni = async (tokenSig, numberOfEth) => {
   const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenSig]);
   const price = await uniExchange.getEthToTokenInputPrice.call(numberOfEth);
 
   return toBN(price);
-}
+};
 
 const getPriceTokenToEthUni = async (tokenSig, numberOftokens) => {
   const uniExchange = await UniswapExchange.at(uniConfig.exchanges[tokenSig]);
   const price = await uniExchange.getTokenToEthInputPrice.call(numberOftokens);
 
   return toBN(price);
-}
+};
 
 const getPriceEthToTokenKyber = async (tokenSig, numberOfEth) => {
   const kyberProxy = await IKyberNetworkProxy.at(KyberNetworkProxyAddress);
@@ -106,7 +102,7 @@ const getPriceEthToTokenKyber = async (tokenSig, numberOfEth) => {
     pureRate: toBN(rate.expectedRate),
     wrappedRate: toBN((toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfEth)),
   };
-}
+};
 
 const getPriceTokenToEthKyber = async (tokenSig, numberOfTokens) => {
   const kyberProxy = await IKyberNetworkProxy.at(KyberNetworkProxyAddress);
@@ -117,7 +113,7 @@ const getPriceTokenToEthKyber = async (tokenSig, numberOfTokens) => {
     pureRate: toBN(rate.expectedRate),
     wrappedRate: toBN((toBN(rate.expectedRate).div(DECIMALS_18)).times(numberOfTokens)),
   };
-}
+};
 
 const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
   topEthBorder = toBN(100000000000000000000000);
@@ -125,7 +121,7 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
   const ethForGasFee = TRANSACTION_GAS.times(gasPrice);
 
   let i = 1;
-  while(topEthBorder.div(i) > botEthBorder) {
+  while (topEthBorder.div(i) > botEthBorder) {
     const ethAmount = topEthBorder.div(i);
 
     let uniRateEthToToken;
@@ -133,9 +129,8 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
     try {
       uniRateEthToToken = await getPriceEthToTokenUni(tokenSig, ethAmount);
       kyberRateEthToToken = await getPriceEthToTokenKyber(tokenSig, ethAmount);
-    }
-    catch(err) {
-      console.log(err);
+    } catch (err) {
+      console.error('No volume for ' + tokenSig, ' with ' + ethAmount);
       i *= 10;
       continue;
     }
@@ -145,9 +140,8 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
     try {
       uniRateTokenToEth = await getPriceTokenToEthUni(tokenSig, kyberRateEthToToken.wrappedRate);
       kyberRateTokenToEth = await getPriceTokenToEthKyber(tokenSig, uniRateEthToToken);
-    }
-    catch(err) {
-      console.log(err);
+    } catch (err) {
+      console.error('No volume for ' + tokenSig, ' with ' + ethAmount);
       i *= 10;
       continue;
     }
@@ -168,13 +162,12 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
     });
 
     if (potentialProfitOneWay > 0) {
-      console.log('Trading Uni to Kyber, token' + tokenSig, ' start amount ' + ethAmount);
+      console.log('Trading Uni to Kyber, token ' + tokenSig, ' start amount ' + ethAmount);
       console.log('Potentian profit is ' + potentialProfitOneWay);
 
       try {
         await performUniKyberTrade(tokenSig, ethAmount, uniRateEthToToken, kyberRateTokenToEth.pureRate);
-      }
-      catch(error) {
+      } catch (error) {
         console.log('Trade failed ');
         console.error(error);
       }
@@ -183,10 +176,9 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
       console.log('Potentian profit is ' + potentialProfitTheOtherWay);
 
       try {
-        await performKyberUniTrade(tokenSig, ethAmount, kyberRateEthToToken.wrappedRate, 
+        await performKyberUniTrade(tokenSig, ethAmount, kyberRateEthToToken.wrappedRate,
           uniRateTokenToEth, kyberRateEthToToken.pureRate);
-      }
-      catch(error) {
+      } catch (error) {
         console.log('Trade failed');
         console.error(error);
       }
@@ -194,64 +186,63 @@ const checkArbitragePossibilityForToken = async (tokenSig, gasPrice) => {
 
     i *= 10;
   }
-}
+};
 
 const performUniKyberTrade = async (tokenSig, ethAmountToSell, tokensAmountToTrade, kyberRate) => {
   const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
 
-  const logs = await arbitrageContract.flashUniETHToKyberTokens(uniConfig.exchanges[tokenSig], 
+  const logs = await arbitrageContract.flashUniETHToKyberTokens(uniConfig.exchanges[tokenSig],
     ethAmountToSell, tokensAmountToTrade, UNLIMITED_DEADLINE, tokenAddresses[tokenSig], tokensAmountToTrade, kyberRate);
 
   console.log(logs);
-}
+};
 
 const performKyberUniTrade = async (tokenSig, ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, kyberRate) => {
   const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);
 
-  const logs = await arbitrageContract.flashKyberETHToUniTokens(uniConfig.exchanges[tokenSig], 
+  const logs = await arbitrageContract.flashKyberETHToUniTokens(uniConfig.exchanges[tokenSig],
     ethAmountToSell, tokensAmountToTrade, ethAmountToBuy, UNLIMITED_DEADLINE, tokenAddresses[tokenSig], kyberRate);
 
   console.log(logs);
-}
+};
 
 
 const checkForAllPossibilities = async () => {
-  let gasPrice = await getGasPrice();
-  
-  for(let i = 0; i < validTokensRopsten.length; i++) {
+  const gasPrice = await getGasPrice();
+
+  for (let i = 0; i < validTokensRopsten.length; i++) {
     await checkArbitragePossibilityForToken(validTokensRopsten[i], gasPrice);
   }
-}
+};
 
 const getGasPrice = async () => {
   const options = {
     url: 'https://ethgasstation.info/api/ethgasAPI.json',
     json: true,
-  }
+  };
 
   const resultGas = await rp(options);
 
   return toBN(resultGas.average).times(100000000);
-}
+};
 
 const getExchange = async (tokenSig) => {
   return await (await UniswapFactory.at(UniswapFactoryAddress)).getExchange.call(tokenAddresses[tokenSig]);
-}
+};
 
 const runBot = async () => {
   await checkForAllPossibilities();
-}
+};
 
 module.exports = async (callback) => {
   try {
     await runBot();
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
-  
+
   callback();
-}
+};
 
 const withdrawETH = async () => {
   const arbitrageContract = await ArbitrageContract.at(arbitrageContractAddress);

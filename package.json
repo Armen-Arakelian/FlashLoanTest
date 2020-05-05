@@ -14,8 +14,9 @@
     "uniTest": "truffle test ./testScripts/uniswapTest.js --network ropsten",
     "arbitrageTest": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
     "arbitrageTestMAINNET": "truffle test ./testScripts/arbitrageTestMAINNET.js --network main",
-    "arbitrageBot": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngine.js --network ropsten",
-    "validate-js": "eslint *.js test/*.js test/helpers/*.js --fix",
+    "arbitrageBotRopsten": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngineRopsten.js --network ropsten",
+    "arbitrageBotMainnet": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngineMainnet.js --network main",
+    "validate-js": "eslint *.js testScripts/*.js arbitrageBot/*.js --fix",
     "validate-sol": "solium --dir contracts --fix"
   },
   "author": "",

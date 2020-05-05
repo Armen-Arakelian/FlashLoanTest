@@ -137,18 +137,4 @@ contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, KyberIntegrat
   }
 
   function () external payable {}
-
-  // test 
-
-  function kyberSwapEtherToTokenPublic(uint256 _ethToSell, 
-    address _token, uint256 _kyberMinConversionRate) 
-  public {
-    kyberSwapEtherToToken(kyberNetworkProxyAddress, _ethToSell, _token, _kyberMinConversionRate);
-  }
-
-  function uniSwapTokenToEthInputPublic(address _exchange, uint256 _tokens_sold, 
-    uint256 _min_eth, uint256 _deadline, address _token) 
-  public {
-    uniSwapTokenToEthInput(_exchange, _tokens_sold, _min_eth, _deadline, _token);
-  }
 }
