@@ -1,6 +1,6 @@
 pragma solidity ^0.5.5;
 
-import "./integration/KyberIntegration.sol";
+import "./integration/BancorIntegration.sol";
 import "./integration/UniswapIntegration.sol";
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -9,20 +9,19 @@ import "./aaveContracts/flashloan/base/FlashLoanReceiverBase.sol";
 import "./aaveContracts/configuration/LendingPoolAddressesProvider.sol";
 import "./aaveContracts/lendingpool/LendingPool.sol";
 
-contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, KyberIntegration, UniswapIntegration {
+contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, BancorIntegration, UniswapIntegration {
   using SafeMath for uint256;
 
   LendingPool lendingPool;
   LendingPoolAddressesProvider provider;
-  address constant kyberNetworkProxyAddress = 0x818E6FECD516Ecc3849DAf6845e3EC868087B755; // ropsten
 
   constructor(LendingPoolAddressesProvider _provider)
-      FlashLoanReceiverBase(_provider) public {
-        provider = LendingPoolAddressesProvider(_provider);
-        lendingPool = LendingPool(provider.getLendingPool());
+    FlashLoanReceiverBase(_provider) public {
+      provider = LendingPoolAddressesProvider(_provider);
+      lendingPool = LendingPool(provider.getLendingPool());
   }
 
-  function flashUniETHToKyberTokens(address _uniExchange, uint256 _ethToSell, uint256 _min_tokens, 
+  function flashUniToBancor(address _uniExchange, uint256 _ethToSell, uint256 _min_tokens, 
     uint256 _deadline, address _token, uint256 _srcAmount, uint256 _kyberRate) 
   external onlyOwner() {
     address ethAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -34,7 +33,7 @@ contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, KyberIntegrat
     lendingPool.flashLoan(receiver, ethAddress, _ethToSell, params);
   }
 
-  function flashKyberETHToUniTokens(address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _min_eth, 
+  function flashBancorToUni(address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _min_eth, 
     uint256 _deadline, address _token, uint256 _kyberRate) 
   external onlyOwner() {
     address ethAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -44,28 +43,6 @@ contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, KyberIntegrat
       _deadline, _token, _kyberRate);
 
     lendingPool.flashLoan(receiver, ethAddress, _ethToSell, params);
-  }
-
-  function flashUniTokenToKyberETH(address _uniExchange, uint256 _tokensToSell, uint256 _eth_sold, 
-    uint256 _min_eth, uint256 _deadline, address _token, uint256 _kyberRate)
-  external onlyOwner() {
-    address receiver = address(this);
-
-    bytes memory params = abi.encode(uint256(2), _uniExchange, _tokensToSell, _eth_sold, _min_eth, 
-      _deadline, _token, _kyberRate);
-
-    lendingPool.flashLoan(receiver, _token, _tokensToSell, params);
-  }
-
-  function flashKyberTokenToUniETH(address _uniExchange, uint256 _tokensToSell, 
-    uint256 _min_tokens, uint256 _eth_sold, uint256 _deadline, address _token, uint256 _kyberRate)
-  external onlyOwner() {
-    address receiver = address(this);
-
-    bytes memory params = abi.encode(uint256(0), _uniExchange, _tokensToSell, _min_tokens, 
-      _deadline, _token, _kyberRate);
-    
-    lendingPool.flashLoan(receiver, _token, _tokensToSell, params);
   }
 
   function executeOperation(
