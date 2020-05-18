@@ -72,7 +72,7 @@ contract('KyberNetworkProxy', async (accounts) => {
     console.log(ethBoughtBack.toString(), ' Eth bought back at uni');
   });
 
-  it.only('arbitrage with flashloan test', async () => {
+  it('arbitrage with flashloan test', async () => {
     const result = await arbitrageFlashUniKyber.flashKyberETHToUniTokens(uniswapExchangeDai.address, toBN(1000000000000000000),
       toBN(581750834000000000000), toBN(1033931583767551261),
       toBN(2587566850), ropstenDaiAddress, toBN(581750834000000000000));
@@ -85,13 +85,7 @@ contract('KyberNetworkProxy', async (accounts) => {
     console.log(logs);
   });
 
-  it('test', async () => {
-    // console.log((await uniswapExchangeDai.getEthToTokenInputPrice(toBN(10000000000000000000))).toString());
-    // console.log((await kyberProxy.getExpectedRate.call(ropstenDaiAddress, ETH_ADDRESS, toBN(2993088952036762490049))).expectedRate.toString())
-
-    //  console.log((await kyberProxy.getExpectedRate.call(ETH_ADDRESS, ropstenDaiAddress, toBN(1000000000000000000))).expectedRate.toString());
-    //  console.log((await kyberProxy.getExpectedRate.call(ropstenDaiAddress, ETH_ADDRESS, toBN(10000000000000000000))).expectedRate.toString());
-
-    console.log((toBN(1).minus(toBN(2))).toString());
+  it.only('test', async () => {
+    console.log(await web3.eth.getBalance('0x0000000000000000000000000000000000000000'));
   });
 });

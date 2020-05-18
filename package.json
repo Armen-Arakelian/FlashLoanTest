@@ -12,7 +12,7 @@
     "flashLoanTest": "truffle --network kovan testScripts/flashLoanTest.js",
     "kyberTest": "truffle test ./testScripts/kyberInteractionTest.js --network ropsten",
     "uniTest": "truffle test ./testScripts/uniswapTest.js --network ropsten",
-    "arbitrageTest": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
+    "arbitrageTestRopsten": "truffle test ./testScripts/arbitrageTest.js --network ropsten",
     "arbitrageTestMAINNET": "truffle test ./testScripts/arbitrageTestMAINNET.js --network main",
     "arbitrageBotRopsten": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngineRopsten.js --network ropsten",
     "arbitrageBotMainnet": "truffle exec ./arbitrageBot/UniKyberPossibilitiesSearchEngineMainnet.js --network main",

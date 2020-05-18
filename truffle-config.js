@@ -76,11 +76,11 @@ module.exports = {
       provider: () => {
         return new HDWalletProvider(
           [process.env.PRIVATEKEY1],
-          'https://ropsten.infura.io/v3/' + process.env.INFURA_API_KEY, 0, 1);
+          'http://64.225.98.159:8080/', 0, 1);
       },
-      network_id: 3,
-      // gas: 8000000,
-      gasLimit: 8000000, // <-- Use this high gas value
+      network_id: '*',
+      networkCheckTimeout: 100000,
+      gasLimit: 8000000,
 
       gasPrice: 1000000000,
     },
