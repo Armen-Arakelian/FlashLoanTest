@@ -22,25 +22,25 @@ contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, BancorIntegra
   }
 
   function flashUniToBancor(address _uniExchange, uint256 _ethToSell, uint256 _min_tokens, 
-    uint256 _deadline, address _token, uint256 _srcAmount, uint256 _kyberRate) 
+    uint256 _deadline, address[] _bancorPath, uint256 _ethToGet) 
   external onlyOwner() {
     address ethAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address receiver = address(this);
 
-    bytes memory params = abi.encode(uint256(0), _uniExchange, _ethToSell, _min_tokens, 
-      _deadline, _token, _srcAmount, _kyberRate);
+    bytes memory params = abi.encode(true, _uniExchange, _ethToSell, _min_tokens, 
+      _deadline, _bancorPath, _ethToGet);
 
     lendingPool.flashLoan(receiver, ethAddress, _ethToSell, params);
   }
 
-  function flashBancorToUni(address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _min_eth, 
-    uint256 _deadline, address _token, uint256 _kyberRate) 
+  function flashBancorToUni(address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _ethToGet, 
+    uint256 _deadline, address[] _bancorPath) 
   external onlyOwner() {
     address ethAddress = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address receiver = address(this);
 
-    bytes memory params = abi.encode(uint256(1), _uniExchange, _ethToSell, _tokens_sold, _min_eth, 
-      _deadline, _token, _kyberRate);
+    bytes memory params = abi.encode(false, _uniExchange, _ethToSell, _tokens_sold, _min_eth, 
+      _deadline, _bancorPath, _ethToGet);
 
     lendingPool.flashLoan(receiver, ethAddress, _ethToSell, params);
   }
@@ -57,50 +57,28 @@ contract ArbitrageFlashUniKyber is Ownable, FlashLoanReceiverBase, BancorIntegra
       
       (uint256 _arbitrageTypeIdentifier, ) = abi.decode(_params, (uint256, address));
 
-      if (_arbitrageTypeIdentifier == 0) {
-        (, address _uniExchange, uint256 _ethToSell, uint256 _min_tokens, uint256 _deadline, 
-          address _token, uint256 _srcAmount, uint256 _kyberRate) = 
-            abi.decode(_params, (uint256, address, uint256, uint256, uint256, address, uint256, uint256));
+      if (_arbitrageTypeIdentifier) {
+        (, address _uniExchange, uint256 _ethToSell, uint256 _min_tokens, 
+          uint256 _deadline, address[] _bancorPath, uint256 _ethToGet) = 
+            abi.decode(_params, (uint256, address, uint256, uint256, uint256, address[], uint256));
         
         require(uniSwapEthToTokenInput(_uniExchange, _ethToSell, _min_tokens, _deadline), 
           'Failed to swap eth to tokens at Uniswap');
 
-        require(kyberSwapTokenToEther(kyberNetworkProxyAddress, _token, _srcAmount, _kyberRate),
+        require(bancorSwapTokentoETH(_bancorPath, _min_tokens, _ethToGet),
           'Failed to swap tokens to eth at Kyber');
 
-      } else if (_arbitrageTypeIdentifier == 1) {
-        (, address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _min_eth, 
-          uint256 _deadline, address _token, uint256 _kyberRate) = 
-            abi.decode(_params, (uint256, address, uint256, uint256, uint256, uint256, address, uint256));
+      } else {
+        (, address _uniExchange, uint256 _ethToSell, uint256 _tokens_sold, uint256 _ethToGet, 
+          uint256 _deadline, address[] _bancorPath) = 
+            abi.decode(_params, (uint256, address, uint256, uint256, uint256, uint256, address[]));
 
-        require(kyberSwapEtherToToken(kyberNetworkProxyAddress, _ethToSell, _token, _kyberRate),
+        require(bancorSwapETHtoToken.value(_ethToSell)(_bancorPath, _tokens_sold),
           'Failed to swap eth to tokens at Kyber');
 
         require(uniSwapTokenToEthOutput(_uniExchange, _tokens_sold, _min_eth, _deadline, _token),
           'Failed to swap tokens to eth at Uniswap');
-
-      } else if (_arbitrageTypeIdentifier == 2) {
-        (, address _uniExchange, uint256 _tokensToSell, uint256 _eth_sold, uint256 _min_eth, 
-          uint256 _deadline, address _token, uint256 _kyberRate) = 
-            abi.decode(_params,  (uint256, address, uint256, uint256, uint256, uint256, address, uint256));
-
-        require(uniSwapTokenToEthOutput(_uniExchange, _tokensToSell, _min_eth, _deadline, _token),
-          'Failed to swap tokens to eth at Uniswap');
-
-        require(kyberSwapEtherToToken(kyberNetworkProxyAddress, _eth_sold, _token, _kyberRate),
-          'Failed to swap eth to tokens at Kyber');
-
-      } else if (_arbitrageTypeIdentifier == 3) {
-        (, address _uniExchange, uint256 _tokensToSell, uint256 _min_tokens, uint256 _eth_sold, uint256 _deadline, 
-          address _token, uint256 _kyberRate) = 
-            abi.decode(_params, (uint256, address, uint256, uint256, uint256, uint256, address, uint256));
-        
-        require(kyberSwapTokenToEther(kyberNetworkProxyAddress, _token, _tokensToSell, _kyberRate),
-          'Failed to swap tokens to eth at Kyber');
-
-        require(uniSwapEthToTokenInput(_uniExchange, _eth_sold, _min_tokens, _deadline), 
-          'Failed to swap eth to tokens at Uniswap');
-      }
+      } 
 
       transferFundsBackToPoolInternal(_reserve, _amount.add(_fee));
   }
