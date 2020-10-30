@@ -1,0 +1,9 @@
+node_modules/
+build/
+dist/
+.idea
+.vscode
+coverage/
+.DS_Store
+
+thegraph/subgraph.yaml
